@@ -17,7 +17,7 @@ spec:
         - name: biblioteca-backend
           # Placeholder: el pipeline CI/CD sobreescribe esta imagen en cada
           # deploy con `kubectl set image` apuntando al tag del commit (sha).
-          image: dockerhub-user/biblioteca-backend:latest
+          image: ckrlos/biblioteca-backend:latest
           ports:
             - containerPort: 3001
           env:
