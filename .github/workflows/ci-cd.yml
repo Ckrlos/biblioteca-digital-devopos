@@ -128,20 +128,21 @@ jobs:
       - name: Aplicar manifiestos de Kubernetes
         run: kubectl apply -f k8s/
 
+    
       - name: Actualizar imagen del backend al tag recien construido
         run: |
           kubectl set image deployment/biblioteca-backend \
             biblioteca-backend=${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-backend:${{ needs.build-and-push.outputs.short_sha }} \
-            -n ${{ secrets.EKS_NAMESPACE }}
+            -n biblioteca
 
       - name: Actualizar imagen del frontend al tag recien construido
         run: |
           kubectl set image deployment/biblioteca-frontend \
             biblioteca-frontend=${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-frontend:${{ needs.build-and-push.outputs.short_sha }} \
-            -n ${{ secrets.EKS_NAMESPACE }}
+            -n biblioteca
 
       - name: Verificar rollout del backend
-        run: kubectl rollout status deployment/biblioteca-backend -n ${{ secrets.EKS_NAMESPACE }}
+        run: kubectl rollout status deployment/biblioteca-backend -n biblioteca
 
       - name: Verificar rollout del frontend
-        run: kubectl rollout status deployment/biblioteca-frontend -n ${{ secrets.EKS_NAMESPACE }}
+        run: kubectl rollout status deployment/biblioteca-frontend -n biblioteca
