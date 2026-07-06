@@ -177,16 +177,16 @@ antes que cualquier recurso namespaced):
 2. `01-mysql-secret.yaml` — credenciales de MySQL (reemplazar valores antes
    de aplicar en un cluster real, o crear el Secret con
    `kubectl create secret generic ... --from-literal=...`)
-3. `02-mysql-pvc.yaml` — almacenamiento persistente para MySQL
-4. `03-mysql-init-configmap.yaml` — mismo contenido que `db/init.sql`
-5. `04-mysql-deployment.yaml` / `05-mysql-service.yaml`
-6. `06-backend-deployment.yaml` (2 replicas, probes a `/health`) /
+3. `03-mysql-init-configmap.yaml` — mismo contenido que `db/init.sql`
+4. `04-mysql-deployment.yaml` (datos en `emptyDir`, no persistentes: se
+   pierden si el pod se reinicia) / `05-mysql-service.yaml`
+5. `06-backend-deployment.yaml` (2 replicas, probes a `/health`) /
    `07-backend-service.yaml` (ClusterIP)
-7. `08-backend-hpa.yaml` — CPU 70%, min 2 / max 10
-8. `09-frontend-deployment.yaml` (2 replicas) /
+6. `08-backend-hpa.yaml` — CPU 70%, min 2 / max 10
+7. `09-frontend-deployment.yaml` (2 replicas) /
    `10-frontend-service.yaml` (**LoadBalancer**, EKS aprovisiona un Classic
    Load Balancer automaticamente, sin pasos manuales)
-9. `11-frontend-hpa.yaml` — CPU 60%, min 2 / max 6
+8. `11-frontend-hpa.yaml` — CPU 60%, min 2 / max 6
 
 Aplicar todo de una vez:
 
