@@ -1,0 +1,65 @@
+name: biblioteca-digital
+
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - biblioteca_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: ${BACKEND_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    ports:
+      - "${BACKEND_PORT}:3001"
+    networks:
+      - biblioteca_net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>{if(r.status!==200)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    build: ./frontend
+    # BACKEND_HOST/BACKEND_PORT no se declaran aqui: el valor por defecto de
+    # la imagen (BACKEND_HOST=backend, BACKEND_PORT=3001) ya coincide con el
+    # nombre de este servicio de compose, asi que nginx resuelve el proxy
+    # /api/* sin configuracion adicional.
+    ports:
+      - "${FRONTEND_PORT}:80"
+    networks:
+      - biblioteca_net
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  biblioteca_net:
+    driver: bridge
+
+volumes:
+  mysql_data:

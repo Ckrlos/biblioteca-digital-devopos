@@ -1,0 +1,15 @@
+# type: LoadBalancer para que EKS aprovisione automaticamente un Classic
+# Load Balancer al aplicar este manifiesto, sin pasos manuales en la consola
+# de AWS (asi el deploy queda 100% automatizado via `kubectl apply`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: biblioteca
+spec:
+  type: LoadBalancer
+  selector:
+    app: biblioteca-frontend
+  ports:
+    - port: 80
+      targetPort: 80

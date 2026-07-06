@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Build output
+dist/
+
+# Variables de entorno reales (nunca commitear)
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Sistema operativo / editores
+.DS_Store
+.vscode/
+.idea/

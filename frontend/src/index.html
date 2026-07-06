@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biblioteca Digital</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>📚 Biblioteca Digital</h1>
+    <p class="subtitle">Gestion de libros y prestamos</p>
+  </header>
+
+  <main class="container">
+    <section id="alertas" class="alertas" aria-live="polite"></section>
+
+    <section class="panel">
+      <h2>Libros</h2>
+      <form id="form-libro" class="form-inline">
+        <input type="hidden" name="id" />
+        <input type="text" name="titulo" placeholder="Titulo" required />
+        <input type="text" name="autor" placeholder="Autor" required />
+        <input type="text" name="isbn" placeholder="ISBN" required />
+        <input type="number" name="stock_total" placeholder="Stock total" min="0" required />
+        <button type="submit">Guardar libro</button>
+        <button type="button" id="btn-cancelar-edicion" hidden>Cancelar</button>
+      </form>
+
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Titulo</th>
+            <th>Autor</th>
+            <th>ISBN</th>
+            <th>Disponible / Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-libros">
+          <tr><td colspan="5">Cargando libros...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Nuevo prestamo</h2>
+      <form id="form-prestamo" class="form-inline">
+        <select name="libro_id" id="select-libro" required>
+          <option value="">Selecciona un libro</option>
+        </select>
+        <input type="text" name="nombre_usuario" placeholder="Nombre del usuario" required />
+        <input type="date" name="fecha_devolucion_estimada" required />
+        <button type="submit">Crear prestamo</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Prestamos</h2>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Libro</th>
+            <th>Usuario</th>
+            <th>Prestado</th>
+            <th>Devolucion estimada</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-prestamos">
+          <tr><td colspan="6">Cargando prestamos...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

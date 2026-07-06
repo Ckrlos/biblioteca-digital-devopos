@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biblioteca-frontend
+  namespace: biblioteca
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: biblioteca-frontend
+  template:
+    metadata:
+      labels:
+        app: biblioteca-frontend
+    spec:
+      containers:
+        - name: biblioteca-frontend
+          # Placeholder: el pipeline CI/CD sobreescribe esta imagen en cada
+          # deploy con `kubectl set image` apuntando al tag del commit (sha).
+          image: dockerhub-user/biblioteca-frontend:latest
+          ports:
+            - containerPort: 80
+          env:
+            # nginx hace reverse proxy de /api/* hacia el Service interno
+            # (ClusterIP) del backend; el navegador nunca necesita conocer
+            # esta direccion, solo llama a rutas relativas del mismo origen.
+            - name: BACKEND_HOST
+              value: backend-service
+            - name: BACKEND_PORT
+              value: "3001"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi

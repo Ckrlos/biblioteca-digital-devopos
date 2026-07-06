@@ -1,0 +1,147 @@
+# Pipeline CI/CD de Biblioteca Digital: test -> build & push (Docker Hub) ->
+# deploy (AWS EKS).
+#
+# Secrets requeridos en GitHub (Settings > Secrets and variables > Actions):
+#   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+#   AWS_REGION, EKS_CLUSTER_NAME, EKS_NAMESPACE
+#
+# NOTA IMPORTANTE sobre AWS Academy:
+# Las credenciales del Learner Lab son de SESION (expiran cada ~3-4 horas),
+# no son un usuario IAM permanente. Por eso este workflow usa
+# AWS_SESSION_TOKEN ademas de las dos claves clasicas: sin ese tercer valor
+# la autenticacion fallara en cuanto la sesion haya rotado. Antes de correr
+# el pipeline hay que refrescar AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY /
+# AWS_SESSION_TOKEN en GitHub Secrets con las credenciales vigentes del
+# Learner Lab (AWS Details > AWS CLI). En una cuenta AWS real esto se evitaria
+# con OIDC federado (GitHub -> rol IAM, sin claves estaticas), pero AWS
+# Academy no permite crear proveedores OIDC ni roles IAM custom, asi que
+# usamos claves de sesion como alternativa documentada.
+
+name: CI/CD Biblioteca Digital
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PNPM_VERSION: 10.15.0
+
+jobs:
+  test:
+    name: Test backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Instalar dependencias del backend
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar tests del backend
+        working-directory: backend
+        run: pnpm test
+
+  build-and-push:
+    name: Build & push imagenes a Docker Hub
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.vars.outputs.short_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Calcular tag de version (sha corto)
+        id: vars
+        run: echo "short_sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push imagen backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-backend:${{ steps.vars.outputs.short_sha }}
+
+      - name: Build & push imagen frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-frontend:${{ steps.vars.outputs.short_sha }}
+
+  deploy:
+    name: Deploy a AWS EKS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # AWS_SESSION_TOKEN es obligatorio: AWS Academy entrega credenciales
+      # temporales de sesion, no credenciales IAM permanentes (ver nota al
+      # inicio de este archivo).
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Actualizar kubeconfig del cluster EKS
+        run: |
+          aws eks update-kubeconfig \
+            --name "${{ secrets.EKS_CLUSTER_NAME }}" \
+            --region "${{ secrets.AWS_REGION }}"
+
+      - name: Aplicar manifiestos de Kubernetes
+        run: kubectl apply -f k8s/
+
+      - name: Actualizar imagen del backend al tag recien construido
+        run: |
+          kubectl set image deployment/biblioteca-backend \
+            biblioteca-backend=${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-backend:${{ needs.build-and-push.outputs.short_sha }} \
+            -n ${{ secrets.EKS_NAMESPACE }}
+
+      - name: Actualizar imagen del frontend al tag recien construido
+        run: |
+          kubectl set image deployment/biblioteca-frontend \
+            biblioteca-frontend=${{ secrets.DOCKERHUB_USERNAME }}/biblioteca-frontend:${{ needs.build-and-push.outputs.short_sha }} \
+            -n ${{ secrets.EKS_NAMESPACE }}
+
+      - name: Verificar rollout del backend
+        run: kubectl rollout status deployment/biblioteca-backend -n ${{ secrets.EKS_NAMESPACE }}
+
+      - name: Verificar rollout del frontend
+        run: kubectl rollout status deployment/biblioteca-frontend -n ${{ secrets.EKS_NAMESPACE }}

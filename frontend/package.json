@@ -1,0 +1,12 @@
+{
+  "name": "biblioteca-digital-frontend",
+  "version": "1.0.0",
+  "description": "Frontend vanilla JS de Biblioteca Digital, bundleado con esbuild",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
+}

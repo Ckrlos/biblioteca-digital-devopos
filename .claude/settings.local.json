@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(pnpm --version)",
+      "Bash(rm -rf node_modules package-lock.json)",
+      "Bash(rm -rf node_modules dist package-lock.json)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm test *)",
+      "Bash(node -e \"require\\('esbuild'\\)\")",
+      "Bash(pnpm run *)",
+      "Bash(docker build *)",
+      "Bash(docker run *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:18080/)",
+      "Bash(docker rm *)",
+      "Bash(docker rmi *)",
+      "Bash(curl -s http://localhost:18080/config.js)",
+      "Bash(docker compose *)",
+      "Bash(docker-compose version *)",
+      "Bash(docker-compose up *)",
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(curl -s http://localhost:3001/api/libros)",
+      "Bash(curl -s http://localhost:3001/metrics)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://localhost:8080/config.js)",
+      "Bash(curl -s -X POST http://localhost:3001/api/prestamos -H \"Content-Type: application/json\" -d '{\"libro_id\":1,\"nombre_usuario\":\"Carlos\",\"fecha_devolucion_estimada\":\"2026-08-01\"}')",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\);console.log\\(d.find\\(l=>l.id===1\\)\\)\")",
+      "Bash(curl -s -X PUT http://localhost:3001/api/prestamos/1/devolver)",
+      "Bash(docker-compose down *)",
+      "Bash(curl -s http://localhost:8080/api/libros)",
+      "Bash(curl -s -o /dev/null -w \"frontend HTTP %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(python3 -c \"import yaml; yaml.safe_load\\(open\\('/home/carlos/IntelliJproject/examenfinaldevops/.github/workflows/ci-cd.yml'\\)\\)\")"
+    ]
+  }
+}
